@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VoltIQ — Energy Intelligence System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0f1e;color:#e2e8f0;min-height:100vh;display:flex}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:#0a0f1e;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:0}
+.login-box{background:#111827;border:1px solid #1e293b;border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.login-logo{font-size:42px;font-weight:800;color:#f59e0b;margin-bottom:4px;letter-spacing:-1px}
+.login-sub{font-size:13px;color:#64748b;margin-bottom:36px}
+.login-box input{width:100%;background:#0a0f1e;border:1px solid #1e293b;border-radius:10px;padding:12px 14px;color:#e2e8f0;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;transition:.2s}
+.login-box input:focus{border-color:#f59e0b}
+.login-btn{width:100%;background:#f59e0b;color:#000;font-size:14px;font-weight:700;padding:13px;border:none;border-radius:10px;cursor:pointer;font-family:inherit;transition:.2s;margin-top:4px}
+.login-btn:hover{background:#fbbf24}
+.login-hint{font-size:11px;color:#475569;margin-top:16px}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:#111827;border-right:1px solid #1e293b;display:flex;flex-direction:column;position:fixed;height:100vh}
+.logo{padding:22px 20px 18px;border-bottom:1px solid #1e293b}
+.logo h1{font-size:20px;font-weight:800;color:#f59e0b;letter-spacing:-0.5px}
+.logo p{font-size:11px;color:#475569;margin-top:2px}
+.nav-sec{padding:14px 20px 5px;font-size:10px;font-weight:600;color:#334155;text-transform:uppercase;letter-spacing:1px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:#64748b;background:none;border:none;width:100%;cursor:pointer;transition:.15s;text-align:left;font-family:inherit}
+.nav-btn:hover{color:#e2e8f0;background:rgba(255,255,255,.04)}
+.nav-btn.active{color:#f59e0b;background:rgba(245,158,11,.08);border-right:2px solid #f59e0b}
+.nav-btn .ic{font-size:15px;width:18px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid #1e293b}
+.logout-btn{display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;background:none;border:none;cursor:pointer;font-family:inherit;width:100%}
+.logout-btn:hover{color:#e2e8f0}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;padding:28px;overflow-y:auto;min-height:100vh}
+.page{display:none}.page.active{display:block}
+.page-hdr{margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+.page-hdr div h2{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.page-hdr div p{color:#475569;font-size:13px;margin-top:3px}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:24px}
+.card{background:#111827;border:1px solid #1e293b;border-radius:14px;padding:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.card.yellow::before{background:#f59e0b}
+.card.green::before{background:#10b981}
+.card.blue::before{background:#3b82f6}
+.card.red::before{background:#ef4444}
+.card-label{font-size:11px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.card-val{font-size:28px;font-weight:700;margin-top:6px;font-family:monospace}
+.card-sub{font-size:11px;color:#475569;margin-top:3px}
+
+/* TABLE */
+.tbl-box{background:#111827;border:1px solid #1e293b;border-radius:14px;overflow:hidden;margin-bottom:20px}
+.tbl-hdr{padding:14px 18px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center}
+.tbl-hdr h3{font-size:14px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#334155;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #1e293b;background:#0d1526}
+td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(30,41,59,.6)}
+tr:last-child td{border:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.empty{text-align:center;padding:36px;color:#334155;font-size:13px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+.ok{background:rgba(16,185,129,.12);color:#10b981}
+.atencao{background:rgba(249,115,22,.12);color:#f97316}
+.critico{background:rgba(239,68,68,.12);color:#ef4444}
+.sem_meta{background:rgba(71,85,105,.2);color:#64748b}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.15s}
+.btn-primary{background:#f59e0b;color:#000}.btn-primary:hover{background:#fbbf24}
+.btn-ghost{background:transparent;color:#64748b;border:1px solid #1e293b}.btn-ghost:hover{color:#e2e8f0;border-color:#334155}
+.btn-danger{background:rgba(239,68,68,.08);color:#ef4444;border:1px solid rgba(239,68,68,.15)}.btn-danger:hover{background:rgba(239,68,68,.15)}
+.btn-sm{padding:4px 9px;font-size:11px}
+
+/* FORM */
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:14px;margin-bottom:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select{background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;padding:9px 11px;color:#e2e8f0;font-size:13px;font-family:inherit;outline:none;transition:.15s}
+.fg input:focus,.fg select:focus{border-color:#f59e0b}
+.fg select option{background:#111827}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#111827;border:1px solid #1e293b;border-radius:16px;padding:26px;width:100%;max-width:460px;animation:up .18s ease}
+@keyframes up{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:18px}
+.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+/* RELATORIO */
+.rel-card{background:#111827;border:1px solid #1e293b;border-radius:14px;padding:24px;margin-bottom:16px}
+.rel-titulo{font-size:20px;font-weight:700}
+.rel-mes{font-size:13px;color:#475569;font-family:monospace;margin-top:2px;margin-bottom:20px}
+.rel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}
+.rel-item label{font-size:10px;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.rel-item .val{font-size:22px;font-weight:700;font-family:monospace;margin-top:3px}
+.val.amarelo{color:#f59e0b}
+.status-banner{border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px;font-size:16px;font-weight:700}
+.status-banner.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:#10b981}
+.status-banner.atencao{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);color:#f97316}
+.status-banner.critico{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444}
+
+/* CHART */
+.chart-box{background:#111827;border:1px solid #1e293b;border-radius:14px;padding:20px;margin-bottom:20px}
+.chart-box h3{font-size:14px;font-weight:600;margin-bottom:16px}
+
+/* SELBAR */
+.selbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.selbar select{background:#111827;border:1px solid #1e293b;border-radius:9px;padding:8px 12px;color:#e2e8f0;font-size:13px;font-family:inherit;outline:none}
+.selbar select:focus{border-color:#f59e0b}
+
+/* COMPARAR */
+.rank-item{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.rank-num{font-size:20px;font-weight:800;color:#334155;width:30px}
+.rank-info{flex:1}
+.rank-name{font-size:14px;font-weight:600}
+.rank-sub{font-size:12px;color:#475569;margin-top:2px}
+.rank-bar-wrap{width:200px;background:#1e293b;border-radius:999px;height:8px;overflow:hidden}
+.rank-bar{height:8px;border-radius:999px;background:#f59e0b;transition:.4s}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#111827;border:1px solid #1e293b;border-radius:12px;padding:12px 16px;font-size:13px;z-index:999;transform:translateY(60px);opacity:0;transition:.3s;max-width:290px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.s{border-left:3px solid #10b981}
+.toast.e{border-left:3px solid #ef4444}
+
+.mono{font-family:monospace}
+.flex{display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚡ VoltIQ</div>
+    <div class="login-sub">Energy Intelligence System</div>
+    <input type="text" id="login-user" placeholder="Usuário" value="admin"/>
+    <input type="password" id="login-pass" placeholder="Senha" value="1234"/>
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+    <div class="login-hint">Usuário: admin &nbsp;|&nbsp; Senha: 1234</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="app" style="display:none">
+  <div class="logo"><h1>⚡ VoltIQ</h1><p>Energy Intelligence System</p></div>
+  <div class="nav-sec">Principal</div>
+  <button class="nav-btn active" onclick="goto('dashboard',this)"><span class="ic">📊</span>Dashboard</button>
+  <div class="nav-sec">Gestão</div>
+  <button class="nav-btn" onclick="goto('empresas',this)"><span class="ic">🏢</span>Empresas</button>
+  <button class="nav-btn" onclick="goto('leituras',this)"><span class="ic">⚡</span>Leituras</button>
+  <button class="nav-btn" onclick="goto('metas',this)"><span class="ic">🎯</span>Metas</button>
+  <div class="nav-sec">Análise</div>
+  <button class="nav-btn" onclick="goto('relatorio',this)"><span class="ic">📄</span>Relatório</button>
+  <button class="nav-btn" onclick="goto('grafico',this)"><span class="ic">📈</span>Gráficos</button>
+  <button class="nav-btn" onclick="goto('comparar',this)"><span class="ic">🏆</span>Comparar</button>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="fazerLogout()">🚪 Sair</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="main-app" style="display:none">
+
+  <!-- DASHBOARD -->
+  <div id="pg-dashboard" class="page active">
+    <div class="page-hdr"><div><h2>Dashboard</h2><p>Visão geral do sistema</p></div></div>
+    <div class="cards" id="dash-cards"><div class="empty">Carregando...</div></div>
+    <div class="tbl-box">
+      <div class="tbl-hdr"><h3>Leituras Recentes</h3></div>
+      <table><thead><tr><th>Empresa</th><th>Mês</th><th>kWh</th><th>Custo</th><th>Status</th></tr></thead>
+      <tbody id="dash-tbody"><tr><td colspan="5" class="empty">Carregando...</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- EMPRESAS -->
+  <div id="pg-empresas" class="page">
+    <div class="page-hdr">
+      <div><h2>Empresas</h2><p>Gerencie as empresas cadastradas</p></div>
+      <div class="flex">
+        <button class="btn btn-ghost" onclick="exportarCSV()">⬇ Exportar CSV</button>
+        <button class="btn btn-primary" onclick="abrirEmpresa()">+ Nova Empresa</button>
+      </div>
+    </div>
+    <div class="tbl-box">
+      <table><thead><tr><th>ID</th><th>Nome</th><th>CNPJ</th><th>Cidade</th><th>Tarifa</th><th>Ações</th></tr></thead>
+      <tbody id="emp-tbody"><tr><td colspan="6" class="empty">Carregando...</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- LEITURAS -->
+  <div id="pg-leituras" class="page">
+    <div class="page-hdr">
+      <div><h2>Leituras</h2><p>Consumo mensal por empresa</p></div>
+      <button class="btn btn-primary" onclick="abrirLeitura()">+ Nova Leitura</button>
+    </div>
+    <div class="selbar">
+      <select id="sel-emp-lei" onchange="carregarLeituras()"><option value="">Selecione uma empresa...</option></select>
+    </div>
+    <div class="tbl-box">
+      <table><thead><tr><th>ID</th><th>Mês</th><th>kWh</th><th>Data Registro</th><th>Ações</th></tr></thead>
+      <tbody id="lei-tbody"><tr><td colspan="5" class="empty">Selecione uma empresa</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- METAS -->
+  <div id="pg-metas" class="page">
+    <div class="page-hdr">
+      <div><h2>Metas</h2><p>Limites mensais de consumo</p></div>
+      <button class="btn btn-primary" onclick="abrirMeta()">+ Nova Meta</button>
+    </div>
+    <div class="selbar">
+      <select id="sel-emp-meta" onchange="carregarMetas()"><option value="">Selecione uma empresa...</option></select>
+    </div>
+    <div class="tbl-box">
+      <table><thead><tr><th>ID</th><th>Mês</th><th>Limite kWh</th><th>Ações</th></tr></thead>
+      <tbody id="meta-tbody"><tr><td colspan="4" class="empty">Selecione uma empresa</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- RELATORIO -->
+  <div id="pg-relatorio" class="page">
+    <div class="page-hdr"><div><h2>Relatório Mensal</h2><p>Análise detalhada por empresa e mês</p></div></div>
+    <div class="tbl-box" style="padding:20px;margin-bottom:20px">
+      <div class="frow">
+        <div class="fg"><label>Empresa</label><select id="rel-emp"><option value="">Selecione...</option></select></div>
+        <div class="fg"><label>Mês</label><input type="month" id="rel-mes"/></div>
+      </div>
+      <div class="flex">
+        <button class="btn btn-primary" onclick="gerarRelatorio()">Gerar Relatório</button>
+        <button class="btn btn-ghost" id="btn-pdf" style="display:none" onclick="gerarPDF()">⬇ Baixar PDF</button>
+      </div>
+    </div>
+    <div id="rel-output"></div>
+  </div>
+
+  <!-- GRAFICOS -->
+  <div id="pg-grafico" class="page">
+    <div class="page-hdr"><div><h2>Gráficos</h2><p>Histórico visual de consumo</p></div></div>
+    <div class="selbar">
+      <select id="sel-emp-graf" onchange="carregarGrafico()"><option value="">Selecione uma empresa...</option></select>
+    </div>
+    <div class="chart-box"><h3>Consumo mensal (kWh)</h3><canvas id="chart-kwh" height="80"></canvas></div>
+    <div class="chart-box"><h3>Custo mensal (R$)</h3><canvas id="chart-custo" height="80"></canvas></div>
+  </div>
+
+  <!-- COMPARAR -->
+  <div id="pg-comparar" class="page">
+    <div class="page-hdr"><div><h2>Comparar Empresas</h2><p>Ranking por consumo total</p></div></div>
+    <div id="comparar-output"><div class="empty">Carregando...</div></div>
+  </div>
+
+</main>
+
+<!-- MODAL EMPRESA -->
+<div class="overlay" id="ov-empresa">
+  <div class="modal">
+    <h3 id="emp-modal-title">Nova Empresa</h3>
+    <input type="hidden" id="emp-edit-id"/>
+    <div class="frow">
+      <div class="fg"><label>Nome</label><input id="emp-nome" placeholder="Razão Social"/></div>
+      <div class="fg"><label>CNPJ</label><input id="emp-cnpj" placeholder="00.000.000/0001-00"/></div>
+      <div class="fg"><label>Cidade</label><input id="emp-cidade" placeholder="São Paulo"/></div>
+      <div class="fg"><label>Tarifa R$/kWh</label><input id="emp-tarifa" type="number" step="0.01" placeholder="0.85"/></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="fechar('ov-empresa')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEmpresa()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LEITURA -->
+<div class="overlay" id="ov-leitura">
+  <div class="modal">
+    <h3 id="lei-modal-title">Nova Leitura</h3>
+    <input type="hidden" id="lei-edit-id"/>
+    <div class="frow">
+      <div class="fg"><label>Empresa</label><select id="lei-emp-sel"><option value="">Selecione...</option></select></div>
+      <div class="fg"><label>Mês</label><input type="month" id="lei-mes"/></div>
+      <div class="fg"><label>kWh Consumido</label><input id="lei-kwh" type="number" step="0.01" placeholder="1200"/></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="fechar('ov-leitura')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarLeitura()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL META -->
+<div class="overlay" id="ov-meta">
+  <div class="modal">
+    <h3>Nova Meta</h3>
+    <div class="frow">
+      <div class="fg"><label>Empresa</label><select id="meta-emp-sel"><option value="">Selecione...</option></select></div>
+      <div class="fg"><label>Mês</label><input type="month" id="meta-mes"/></div>
+      <div class="fg"><label>Limite kWh</label><input id="meta-kwh" type="number" step="0.01" placeholder="1200"/></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="fechar('ov-meta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMeta()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+let chartKwh = null, chartCusto = null;
+let ultimoRelatorio = null;
+
+// LOGIN
+function fazerLogin(){
+  const u = document.getElementById('login-user').value;
+  const p = document.getElementById('login-pass').value;
+  if(u === 'admin' && p === '1234'){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'block';
+    loadDash();
+  } else {
+    toast('Usuário ou senha incorretos!','e');
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') fazerLogin(); });
+
+function fazerLogout(){
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('main-app').style.display = 'none';
+}
+
+// NAVEGAÇÃO
+function goto(id, el){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  el.classList.add('active');
+  const acoes = {
+    dashboard: loadDash,
+    empresas:  loadEmpresas,
+    leituras:  () => fillSelects(),
+    metas:     () => fillSelects(),
+    relatorio: () => fillSelects(),
+    grafico:   () => fillSelects(),
+    comparar:  loadComparar,
+  };
+  if(acoes[id]) acoes[id]();
+}
+
+// TOAST
+function toast(msg, tipo='s'){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show '+tipo;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// API
+async function api(path, method='GET', body=null){
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(API+path, opts);
+  const d = await r.json();
+  if(!r.ok) throw new Error(d.erro || 'Erro');
+  return d;
+}
+
+function fechar(id){ document.getElementById(id).classList.remove('open'); }
+
+function badge(st){
+  const t = {OK:'✅ OK', ATENCAO:'⚠️ Atenção', CRITICO:'🚨 Crítico', SEM_META:'— Sem Meta', 'SEM META':'— Sem Meta'};
+  const c = {OK:'ok', ATENCAO:'atencao', CRITICO:'critico', SEM_META:'sem_meta', 'SEM META':'sem_meta'};
+  return `<span class="badge ${c[st]||'sem_meta'}">${t[st]||st}</span>`;
+}
+
+function fmtMes(m){
+  if(!m) return '';
+  const [y,mo] = m.split('-');
+  const n = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${n[parseInt(mo)-1]}/${y}`;
+}
+
+// SELECTS
+async function fillSelects(){
+  try{
+    const data = await api('/empresas');
+    const opts = data.map(e => `<option value="${e[0]}">${e[1]}</option>`).join('');
+    ['sel-emp-lei','sel-emp-meta','lei-emp-sel','meta-emp-sel','rel-emp','sel-emp-graf'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = '<option value="">Selecione...</option>'+opts;
+    });
+  }catch(e){}
+}
+
+// DASHBOARD
+async function loadDash(){
+  try{
+    const d = await api('/dashboard');
+    document.getElementById('dash-cards').innerHTML = `
+      <div class="card yellow"><div class="card-label">Empresas</div><div class="card-val">${d.total_empresas}</div><div class="card-sub">cadastradas</div></div>
+      <div class="card green"><div class="card-label">Leituras</div><div class="card-val">${d.total_leituras}</div><div class="card-sub">registradas</div></div>
+      <div class="card blue"><div class="card-label">Total kWh</div><div class="card-val">${Number(d.total_kwh).toLocaleString('pt-BR',{maximumFractionDigits:0})}</div><div class="card-sub">consumidos</div></div>
+    `;
+    const rows = d.recentes.map(r => `<tr>
+      <td><strong>${r.empresa}</strong></td>
+      <td class="mono">${fmtMes(r.mes)}</td>
+      <td class="mono">${Number(r.kwh).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh</td>
+      <td class="mono" style="color:#f59e0b">R$ ${Number(r.custo).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td>${badge(r.status)}</td>
+    </tr>`).join('');
+    document.getElementById('dash-tbody').innerHTML = rows || '<tr><td colspan="5" class="empty">Sem leituras ainda</td></tr>';
+  }catch(e){ toast('Erro ao carregar dashboard','e'); }
+}
+
+// EMPRESAS
+async function loadEmpresas(){
+  try{
+    const data = await api('/empresas');
+    const rows = data.map(e => `<tr>
+      <td class="mono" style="color:#334155">#${e[0]}</td>
+      <td><strong>${e[1]}</strong></td>
+      <td class="mono" style="font-size:12px">${e[2]}</td>
+      <td>${e[3]}</td>
+      <td class="mono" style="color:#f59e0b">R$ ${Number(e[4]).toFixed(2)}</td>
+      <td><div class="flex">
+        <button class="btn btn-ghost btn-sm" onclick='editEmpresa(${e[0]},"${e[1]}","${e[2]}","${e[3]}",${e[4]})'>Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="delEmpresa(${e[0]})">Excluir</button>
+      </div></td>
+    </tr>`).join('');
+    document.getElementById('emp-tbody').innerHTML = rows || '<tr><td colspan="6" class="empty">Nenhuma empresa cadastrada</td></tr>';
+    fillSelects();
+  }catch(e){ toast('Erro ao carregar empresas','e'); }
+}
+
+function abrirEmpresa(){
+  document.getElementById('emp-edit-id').value = '';
+  document.getElementById('emp-modal-title').textContent = 'Nova Empresa';
+  ['emp-nome','emp-cnpj','emp-cidade','emp-tarifa'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ov-empresa').classList.add('open');
+}
+function editEmpresa(id,nome,cnpj,cidade,tarifa){
+  document.getElementById('emp-edit-id').value = id;
+  document.getElementById('emp-modal-title').textContent = 'Editar Empresa';
+  document.getElementById('emp-nome').value = nome;
+  document.getElementById('emp-cnpj').value = cnpj;
+  document.getElementById('emp-cidade').value = cidade;
+  document.getElementById('emp-tarifa').value = tarifa;
+  document.getElementById('ov-empresa').classList.add('open');
+}
+async function salvarEmpresa(){
+  const id = document.getElementById('emp-edit-id').value;
+  const body = {nome:document.getElementById('emp-nome').value, cnpj:document.getElementById('emp-cnpj').value, cidade:document.getElementById('emp-cidade').value, tarifa_reais:parseFloat(document.getElementById('emp-tarifa').value)};
+  try{
+    if(id) await api('/empresas/'+id, 'PUT', {nome:body.nome, cidade:body.cidade, tarifa_reais:body.tarifa_reais});
+    else    await api('/empresas', 'POST', body);
+    fechar('ov-empresa'); loadEmpresas(); toast('Empresa salva!');
+  }catch(e){ toast(e.message,'e'); }
+}
+async function delEmpresa(id){
+  if(!confirm('Excluir esta empresa? Leituras e metas serão apagadas.')) return;
+  try{ await api('/empresas/'+id,'DELETE'); loadEmpresas(); toast('Empresa excluída.'); }
+  catch(e){ toast(e.message,'e'); }
+}
+
+// EXPORTAR CSV
+async function exportarCSV(){
+  try{
+    const data = await api('/empresas');
+    const linhas = [['ID','Nome','CNPJ','Cidade','Tarifa R$/kWh']];
+    data.forEach(e => linhas.push([e[0],e[1],e[2],e[3],e[4]]));
+    const csv = linhas.map(l => l.join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'voltiq_empresas.csv'; a.click();
+    toast('CSV exportado!');
+  }catch(e){ toast('Erro ao exportar','e'); }
+}
+
+// LEITURAS
+async function carregarLeituras(){
+  const id = document.getElementById('sel-emp-lei').value;
+  if(!id){ document.getElementById('lei-tbody').innerHTML = '<tr><td colspan="5" class="empty">Selecione uma empresa</td></tr>'; return; }
+  try{
+    const data = await api('/leituras/'+id);
+    const rows = data.map(l => `<tr>
+      <td class="mono" style="color:#334155">#${l[0]}</td>
+      <td class="mono">${fmtMes(l[2])}</td>
+      <td class="mono">${Number(l[3]).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh</td>
+      <td style="color:#475569;font-size:12px">${l[4]}</td>
+      <td><div class="flex">
+        <button class="btn btn-ghost btn-sm" onclick="editLeitura(${l[0]},${l[3]})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="delLeitura(${l[0]})">Excluir</button>
+      </div></td>
+    </tr>`).join('');
+    document.getElementById('lei-tbody').innerHTML = rows || '<tr><td colspan="5" class="empty">Nenhuma leitura</td></tr>';
+  }catch(e){ toast(e.message,'e'); }
+}
+function abrirLeitura(){ fillSelects(); document.getElementById('lei-edit-id').value=''; document.getElementById('lei-modal-title').textContent='Nova Leitura'; document.getElementById('lei-kwh').value=''; document.getElementById('ov-leitura').classList.add('open'); }
+function editLeitura(id,kwh){ document.getElementById('lei-edit-id').value=id; document.getElementById('lei-modal-title').textContent='Editar Leitura'; document.getElementById('lei-kwh').value=kwh; document.getElementById('ov-leitura').classList.add('open'); }
+async function salvarLeitura(){
+  const id = document.getElementById('lei-edit-id').value;
+  try{
+    if(id){ await api('/leituras/'+id,'PUT',{kwh_consumido:parseFloat(document.getElementById('lei-kwh').value)}); }
+    else{
+      const empId = document.getElementById('lei-emp-sel').value;
+      const mes   = document.getElementById('lei-mes').value;
+      if(!empId||!mes){ toast('Preencha todos os campos','e'); return; }
+      await api('/leituras','POST',{id_empresa:parseInt(empId), mes_referencia:mes, kwh_consumido:parseFloat(document.getElementById('lei-kwh').value)});
+    }
+    fechar('ov-leitura'); carregarLeituras(); toast('Leitura salva!');
+  }catch(e){ toast(e.message,'e'); }
+}
+async function delLeitura(id){
+  if(!confirm('Excluir esta leitura?')) return;
+  try{ await api('/leituras/'+id,'DELETE'); carregarLeituras(); toast('Leitura excluída.'); }
+  catch(e){ toast(e.message,'e'); }
+}
+
+// METAS
+async function carregarMetas(){
+  const id = document.getElementById('sel-emp-meta').value;
+  if(!id){ document.getElementById('meta-tbody').innerHTML = '<tr><td colspan="4" class="empty">Selecione uma empresa</td></tr>'; return; }
+  try{
+    const data = await api('/metas/'+id);
+    const rows = data.map(m => `<tr>
+      <td class="mono" style="color:#334155">#${m[0]}</td>
+      <td class="mono">${fmtMes(m[2])}</td>
+      <td class="mono">${Number(m[3]).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh</td>
+      <td><button class="btn btn-danger btn-sm" onclick="delMeta(${m[0]})">Excluir</button></td>
+    </tr>`).join('');
+    document.getElementById('meta-tbody').innerHTML = rows || '<tr><td colspan="4" class="empty">Nenhuma meta</td></tr>';
+  }catch(e){ toast(e.message,'e'); }
+}
+function abrirMeta(){ fillSelects(); document.getElementById('meta-kwh').value=''; document.getElementById('ov-meta').classList.add('open'); }
+async function salvarMeta(){
+  const empId  = document.getElementById('meta-emp-sel').value;
+  const mes    = document.getElementById('meta-mes').value;
+  const limite = parseFloat(document.getElementById('meta-kwh').value);
+  if(!empId||!mes||!limite){ toast('Preencha todos os campos','e'); return; }
+  try{
+    await api('/metas','POST',{id_empresa:parseInt(empId), mes_referencia:mes, limite_kwh:limite});
+    fechar('ov-meta'); carregarMetas(); toast('Meta cadastrada!');
+  }catch(e){ toast(e.message,'e'); }
+}
+async function delMeta(id){
+  if(!confirm('Excluir esta meta?')) return;
+  try{ await api('/metas/'+id,'DELETE'); carregarMetas(); toast('Meta excluída.'); }
+  catch(e){ toast(e.message,'e'); }
+}
+
+// RELATORIO
+async function gerarRelatorio(){
+  const id  = document.getElementById('rel-emp').value;
+  const mes = document.getElementById('rel-mes').value;
+  if(!id||!mes){ toast('Selecione empresa e mês','e'); return; }
+  const out = document.getElementById('rel-output');
+  out.innerHTML = '<div class="empty">Gerando relatório...</div>';
+  try{
+    const r = await api(`/relatorio/${id}/${mes}`);
+    ultimoRelatorio = r;
+    const stCls  = r.status==='CRITICO'?'critico':r.status==='ATENCAO'?'atencao':'ok';
+    const stIcon = r.status==='CRITICO'?'🚨':r.status==='ATENCAO'?'⚠️':'✅';
+    const varHtml = r.variacao != null
+      ? `<div class="rel-item"><label>Variação</label><div class="val" style="color:${r.variacao>0?'#ef4444':'#10b981'}">${r.variacao>0?'+':''}${r.variacao}%</div></div>` : '';
+    const metaHtml = r.limite != null
+      ? `<div class="rel-item"><label>Meta</label><div class="val">${Number(r.limite).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh</div></div>` : '';
+    out.innerHTML = `
+      <div class="rel-card">
+        <div class="rel-titulo">${r.empresa}</div>
+        <div class="rel-mes">${fmtMes(r.mes)} &nbsp;|&nbsp; ${r.mes}</div>
+        <div class="rel-grid">
+          <div class="rel-item"><label>Consumo</label><div class="val">${Number(r.kwh).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh</div></div>
+          ${metaHtml}
+          <div class="rel-item"><label>Custo</label><div class="val amarelo">R$ ${Number(r.custo).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+          ${varHtml}
+        </div>
+        <div class="status-banner ${stCls}">
+          <span style="font-size:24px">${stIcon}</span>
+          <div>
+            <div>STATUS: ${r.status}</div>
+            ${r.status==='CRITICO'&&r.limite?`<div style="font-size:12px;font-weight:400;margin-top:2px">Meta ultrapassada em ${(r.kwh-r.limite).toFixed(2)} kWh</div>`:''}
+            ${r.status==='ATENCAO'?'<div style="font-size:12px;font-weight:400;margin-top:2px">Próximo do limite — atenção!</div>':''}
+            ${r.status==='OK'?'<div style="font-size:12px;font-weight:400;margin-top:2px">Consumo dentro do esperado</div>':''}
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('btn-pdf').style.display = 'inline-flex';
+  }catch(e){
+    out.innerHTML = `<div class="rel-card"><p style="color:#ef4444">${e.message}</p></div>`;
+  }
+}
+
+// PDF
+function gerarPDF(){
+  if(!ultimoRelatorio) return;
+  const r = ultimoRelatorio;
+  const html = `<html><head><meta charset="UTF-8"/>
+  <style>body{font-family:Arial,sans-serif;padding:40px;color:#1a1a1a;max-width:600px;margin:auto}
+  h1{color:#f59e0b;font-size:28px;margin-bottom:4px}
+  .sub{color:#666;font-size:13px;margin-bottom:28px}
+  .item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee;font-size:14px}
+  .item span{font-weight:600}
+  .status{margin-top:24px;padding:16px 20px;border-radius:10px;font-size:16px;font-weight:700}
+  .ok{background:#e8faf4;color:#10b981}.atencao{background:#fff4e8;color:#f97316}.critico{background:#ffeaea;color:#ef4444}
+  </style></head><body>
+  <h1>⚡ VoltIQ</h1>
+  <div class="sub">Relatório Mensal — ${r.empresa} — ${fmtMes(r.mes)}</div>
+  <div class="item"><div>Mês de Referência</div><span>${r.mes}</span></div>
+  <div class="item"><div>Consumo</div><span>${Number(r.kwh).toFixed(2)} kWh</span></div>
+  ${r.limite?`<div class="item"><div>Meta</div><span>${Number(r.limite).toFixed(2)} kWh</span></div>`:''}
+  <div class="item"><div>Custo</div><span>R$ ${Number(r.custo).toFixed(2)}</span></div>
+  ${r.variacao!=null?`<div class="item"><div>Variação</div><span>${r.variacao>0?'+':''}${r.variacao}%</span></div>`:''}
+  <div class="status ${r.status==='CRITICO'?'critico':r.status==='ATENCAO'?'atencao':'ok'}">
+    STATUS: ${r.status}${r.status==='CRITICO'&&r.limite?' — Meta ultrapassada em '+(r.kwh-r.limite).toFixed(2)+' kWh':''}
+  </div>
+  <p style="margin-top:32px;color:#999;font-size:11px">Gerado pelo VoltIQ — Energy Intelligence System</p>
+  </body></html>`;
+  const win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
+// GRAFICOS
+async function carregarGrafico(){
+  const id = document.getElementById('sel-emp-graf').value;
+  if(!id) return;
+  try{
+    const data = await api('/historico?id='+id);
+    const labels = data.map(d => fmtMes(d.mes));
+    const kwhs   = data.map(d => d.kwh);
+    const custos = data.map(d => d.custo);
+    const limites= data.map(d => d.limite);
+
+    if(chartKwh) chartKwh.destroy();
+    if(chartCusto) chartCusto.destroy();
+
+    const optsBase = {responsive:true,plugins:{legend:{labels:{color:'#94a3b8',font:{size:12}}},tooltip:{backgroundColor:'#1e293b',titleColor:'#e2e8f0',bodyColor:'#94a3b8'}},scales:{x:{ticks:{color:'#475569'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#475569'},grid:{color:'rgba(255,255,255,.04)'}}}};
+
+    chartKwh = new Chart(document.getElementById('chart-kwh'), {
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'kWh consumido',data:kwhs,backgroundColor:'rgba(245,158,11,.7)',borderRadius:6},
+        {label:'Meta kWh',data:limites,type:'line',borderColor:'#ef4444',borderDash:[5,5],tension:.3,pointBackgroundColor:'#ef4444',fill:false}
+      ]},
+      options:optsBase
+    });
+
+    chartCusto = new Chart(document.getElementById('chart-custo'), {
+      type:'line',
+      data:{labels,datasets:[{label:'Custo R$',data:custos,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.08)',tension:.3,fill:true,pointBackgroundColor:'#10b981'}]},
+      options:optsBase
+    });
+  }catch(e){ toast('Erro ao carregar gráfico','e'); }
+}
+
+// COMPARAR
+async function loadComparar(){
+  try{
+    const data = await api('/comparar');
+    const max  = data.length > 0 ? Math.max(...data.map(d => d.kwh)) : 1;
+    const html = data.map((d,i) => `
+      <div class="rank-item">
+        <div class="rank-num">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${d.empresa}</div>
+          <div class="rank-sub">${Number(d.kwh).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh total &nbsp;|&nbsp; R$ ${Number(d.custo).toLocaleString('pt-BR',{minimumFractionDigits:2})} &nbsp;|&nbsp; ${d.leituras} leitura(s)</div>
+        </div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${max>0?(d.kwh/max*100):0}%"></div></div>
+      </div>`).join('');
+    document.getElementById('comparar-output').innerHTML = html || '<div class="empty">Sem dados</div>';
+  }catch(e){ toast('Erro ao carregar comparação','e'); }
+}
+
+// INIT
+window.addEventListener('load', () => {
+  const hoje = new Date();
+  const mes  = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('rel-mes').value = mes;
+});
+</script>
+</body>
+</html>
