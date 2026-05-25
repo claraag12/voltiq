@@ -571,7 +571,7 @@ async function gerarRelatorio(){
     const stCls  = r.status==='CRITICO'?'critico':r.status==='ATENCAO'?'atencao':'ok';
     const stIcon = r.status==='CRITICO'?'🚨':r.status==='ATENCAO'?'⚠️':'✅';
     const varHtml = r.variacao != null
-      ? `<div class="rel-item"><label>Variação</label><div class="val" style="color:${r.variacao>0?'#ef4444':'#10b981'}">${r.variacao>0?'+':''}${r.variacao}%</div></div>` : '';
+      ? `<div class="rel-item"><label>Variação Mensal</label><div class="val" style="color:${r.variacao>0?'#ef4444':'#10b981'}">${r.variacao>0?'+':''}${r.variacao}%</div></div>` : '';
     const metaHtml = r.limite != null
       ? `<div class="rel-item"><label>Meta</label><div class="val">${Number(r.limite).toLocaleString('pt-BR',{minimumFractionDigits:2})} kWh</div></div>` : '';
     out.innerHTML = `
