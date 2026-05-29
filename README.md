@@ -16,7 +16,7 @@ Sistema de gestão de consumo de energia elétrica para pequenas empresas.
 ```
 ## 📁 Estrutura do Projeto
 
-```text
+```
 voltiq/
 │
 ├── backend/
