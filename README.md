@@ -13,23 +13,32 @@ Sistema de gestão de consumo de energia elétrica para pequenas empresas.
 | Guilherme | Scrum Master — Backend Python |
 | Kaio | Desenvolvedor — Frontend |
 
----
-
-## 📁 Arquivos do Projeto
-
 ```
+## 📁 Estrutura do Projeto
+
+```text
 voltiq/
-├── banco_de_dados.sql  → cria as tabelas no MySQL
-├── conexao.py          → conecta o Python ao banco
-├── calculo.py          → calcula custo, status e variação
-├── empresa.py          → cadastro de empresas
-├── leitura.py          → registro de leituras
-├── meta.py             → cadastro de metas
-├── main.py             → menu no terminal
-├── servidor.py         → liga o frontend ao banco
-└── index.html          → interface visual do sistema
-```
-
+│
+├── backend/
+│   ├── calculo.py          → calcula custo, status e variação
+│   ├── conexao.py          → conexão com o banco de dados
+│   ├── empresa.py          → operações de empresas
+│   ├── leitura.py          → operações de leituras
+│   ├── meta.py             → operações de metas
+│   ├── main.py             → menu principal do sistema
+│   └── servidor.py         → integração entre frontend e backend
+│
+├── banco/
+│   └── banco_de_dados.sql  → script de criação do banco MySQL
+│
+├── front-end/
+│   └── index2.html         → interface visual do sistema
+│
+├── modelagem/
+│   ├── Conceitual_1.brM3   → modelo conceitual
+│   └── Lógico_1.brM3       → modelo lógico
+│
+└── README.md
 ---
 
 ## 💻 Pré-requisitos
