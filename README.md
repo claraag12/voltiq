@@ -233,8 +233,6 @@ python servidor.py
 
 - **Python 3.13** — lógica e back-end
 - **MySQL** — banco de dados
-- **HTML + CSS + JavaScript** — interface visual
-
 ---
 
 📅 ExpoTech 2026
